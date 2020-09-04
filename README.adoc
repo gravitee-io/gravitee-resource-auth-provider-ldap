@@ -1,0 +1,82 @@
+= Gravitee.io LDAP Authentication Provider
+
+ifdef::env-github[]
+image:https://ci.gravitee.io/buildStatus/icon?job=gravitee-io/gravitee-resource-auth-provider-ldap/master["Build status", link="https://ci.gravitee.io/job/gravitee-io/job/gravitee-resource-oauth2-provider-am/"]
+image:https://badges.gitter.im/Join Chat.svg["Gitter", link="https://gitter.im/gravitee-io/gravitee-resource-auth-provider-ldap?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
+endif::[]
+
+== Description
+
+Gravitee.io LDAP Authentication Provider resource is used to validate user's credentials against an LDAP server.
+
+== Configuration
+
+You can configure the resource with the following options :
+
+|===
+|Property |Required |Description |Type |Default
+
+.^|contextSourceUrl
+^.^|X
+|URL to the LDAP server instance
+^.^|string
+^.^|ldap://myserver.example.com:389
+
+.^|contextSourceBase
+^.^|X
+|The source base used to authenticate to the LDAP server and query for users when validating user's credentials
+^.^|string
+^.^|-
+
+.^|contextSourceUsername
+^.^|X
+|Username credential used to connect to the LDAP server
+^.^|string
+^.^|-
+
+.^|contextSourcePassword
+^.^|X
+|Password credential used to connect to the LDAP server
+^.^|string
+^.^|-
+
+.^|useStartTLS
+^.^|X
+|Should the API gateway use SSL to connect to the LDAP server
+^.^|boolean
+^.^|false
+
+.^|userSearchFilter
+^.^|X
+|LDAP Filter to select the relevant attribute to check the username
+^.^|string
+^.^|uid={0}
+
+.^|userSearchBase
+^.^|X
+|Search base used to search into the correct OU when validating user's credentials
+^.^|string
+^.^|ou=users
+
+|===
+
+
+[source, json]
+.Configuration example
+----
+{
+    "configuration": {
+        "contextSourceUrl": "ldap://localhost:1389",
+        "contextSourceBase": "dc=example,dc=com",
+        "contextSourceUsername": "cn=Directory Manager",
+        "contextSourcePassword":"password",
+        "useStartTLS": false,
+        "userSearchFilter": "uid={0}",
+        "userSearchBase": "ou=Special Users",
+        "connectTimeout": 5000,
+        "responseTimeout": 5000,
+        "minPoolSize": 5,
+        "maxPoolSize": 15
+    }
+}
+----
