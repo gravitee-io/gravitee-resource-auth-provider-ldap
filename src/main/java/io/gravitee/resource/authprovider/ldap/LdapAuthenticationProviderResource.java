@@ -15,6 +15,7 @@
  */
 package io.gravitee.resource.authprovider.ldap;
 
+import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.resource.authprovider.api.Authentication;
 import io.gravitee.resource.authprovider.api.AuthenticationProviderResource;
@@ -50,7 +51,7 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
     private String [] userAttributes = ReturnAttributes.ALL_USER.value();
 
     @Override
-    public void authenticate(String username, String password, Handler<Authentication> handler) {
+    public void authenticate(String username, String password, ExecutionContext context, Handler<Authentication> handler) {
         Authentication authentication = cache.get(username);
 
         if (authentication == null) {
