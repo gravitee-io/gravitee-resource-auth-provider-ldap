@@ -16,7 +16,6 @@
 package io.gravitee.resource.authprovider.ldap.configuration;
 
 import io.gravitee.resource.api.ResourceConfiguration;
-
 import java.util.List;
 
 /**

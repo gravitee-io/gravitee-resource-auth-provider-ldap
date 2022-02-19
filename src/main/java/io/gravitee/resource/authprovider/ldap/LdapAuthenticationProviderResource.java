@@ -21,16 +21,15 @@ import io.gravitee.resource.authprovider.api.Authentication;
 import io.gravitee.resource.authprovider.api.AuthenticationProviderResource;
 import io.gravitee.resource.authprovider.ldap.cache.LRUCache;
 import io.gravitee.resource.authprovider.ldap.configuration.LdapAuthenticationProviderResourceConfiguration;
+import java.time.Duration;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.ldaptive.*;
 import org.ldaptive.auth.*;
 import org.ldaptive.pool.*;
 import org.ldaptive.provider.unboundid.UnboundIDProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Duration;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -48,7 +47,7 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
 
     private LRUCache cache;
 
-    private String [] userAttributes = ReturnAttributes.ALL_USER.value();
+    private String[] userAttributes = ReturnAttributes.ALL_USER.value();
 
     @Override
     public void authenticate(String username, String password, ExecutionContext context, Handler<Authentication> handler) {
@@ -57,15 +56,17 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
         if (authentication == null) {
             try {
                 AuthenticationResponse response = authenticator.authenticate(
-                        new AuthenticationRequest(username, new Credential(password), userAttributes));
+                    new AuthenticationRequest(username, new Credential(password), userAttributes)
+                );
                 if (response.getResult()) {
                     LdapEntry userEntry = response.getLdapEntry();
 
                     authentication = new Authentication(userEntry.getDn());
 
-                    Map<String, Object> attributes = userEntry.getAttributes().stream()
-                            .collect(Collectors.toMap(LdapAttribute::getName,
-                                    LdapAttribute::getStringValue));
+                    Map<String, Object> attributes = userEntry
+                        .getAttributes()
+                        .stream()
+                        .collect(Collectors.toMap(LdapAttribute::getName, LdapAttribute::getStringValue));
 
                     authentication.setAttributes(attributes);
 
@@ -118,8 +119,12 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
         authenticator = new Authenticator(dnResolver, authHandler);
         authenticator.setEntryResolver(pooledSearchEntryResolver);
 
-        cache = new LRUCache(configuration().getCacheMaxElements(),
-                Duration.ofMillis(configuration().getCacheTimeToLive()), Duration.ofMinutes(1));
+        cache =
+            new LRUCache(
+                configuration().getCacheMaxElements(),
+                Duration.ofMillis(configuration().getCacheTimeToLive()),
+                Duration.ofMinutes(1)
+            );
 
         if (configuration().getAttributes() != null && !configuration().getAttributes().isEmpty()) {
             userAttributes = new String[configuration().getAttributes().size()];
@@ -174,8 +179,10 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
         connectionConfig.setResponseTimeout(Duration.ofMillis(configuration().getResponseTimeout()));
         connectionConfig.setLdapUrl(configuration().getContextSourceUrl());
         connectionConfig.setUseStartTLS(configuration().isUseStartTLS());
-        BindConnectionInitializer connectionInitializer =
-                new BindConnectionInitializer(configuration().getContextSourceUsername(), new Credential(configuration().getContextSourcePassword()));
+        BindConnectionInitializer connectionInitializer = new BindConnectionInitializer(
+            configuration().getContextSourceUsername(),
+            new Credential(configuration().getContextSourcePassword())
+        );
         connectionConfig.setConnectionInitializer(connectionInitializer);
         return connectionConfig;
     }
@@ -193,7 +200,10 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
         poolConfig.setMinPoolSize(configuration().getMinPoolSize());
         poolConfig.setMaxPoolSize(configuration().getMaxPoolSize());
         poolConfig.setValidatePeriodically(true);
-        BlockingConnectionPool connectionPool = new BlockingConnectionPool(poolConfig, (DefaultConnectionFactory) searchConnectionFactory());
+        BlockingConnectionPool connectionPool = new BlockingConnectionPool(
+            poolConfig,
+            (DefaultConnectionFactory) searchConnectionFactory()
+        );
         connectionPool.setValidator(new SearchValidator());
         return connectionPool;
     }
