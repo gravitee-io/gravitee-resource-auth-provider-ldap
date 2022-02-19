@@ -16,7 +16,6 @@
 package io.gravitee.resource.authprovider.ldap.cache;
 
 import io.gravitee.resource.authprovider.api.Authentication;
-
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -49,15 +48,13 @@ public class LRUCache {
     /**
      * Executor for performing eviction.
      */
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-            // CheckStyle:JavadocVariable OFF
-            r -> {
-                final Thread t = new Thread(r);
-                t.setDaemon(true);
-                return t;
-            });
-    // CheckStyle:JavadocVariable ON
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> { // CheckStyle:JavadocVariable OFF
+        final Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    });
 
+    // CheckStyle:JavadocVariable ON
 
     /**
      * Creates a new LRU cache.
@@ -67,18 +64,18 @@ public class LRUCache {
      * @param interval   to enforce timeToLive
      */
     public LRUCache(final int size, final Duration timeToLive, final Duration interval) {
-        cache = new LinkedHashMap<String, Item>(INITIAL_CAPACITY, LOAD_FACTOR, true) {
+        cache =
+            new LinkedHashMap<String, Item>(INITIAL_CAPACITY, LOAD_FACTOR, true) {
+                /**
+                 * serialVersionUID.
+                 */
+                private static final long serialVersionUID = -4082551016104288539L;
 
-            /**
-             * serialVersionUID.
-             */
-            private static final long serialVersionUID = -4082551016104288539L;
-
-            @Override
-            protected boolean removeEldestEntry(Map.Entry eldest) {
-                return size() > size;
-            }
-        };
+                @Override
+                protected boolean removeEldestEntry(Map.Entry eldest) {
+                    return size() > size;
+                }
+            };
 
         final Runnable expire = () -> {
             synchronized (cache) {
@@ -165,4 +162,3 @@ public class LRUCache {
         }
     }
 }
-
