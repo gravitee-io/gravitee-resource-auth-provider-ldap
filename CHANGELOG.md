@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/compare/1.2.0...1.3.0) (2022-03-04)
+
+
+### Features
+
+* update dependencies to be compatible with 3.15.x ([5d8eda6](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/commit/5d8eda6b018ca00ac112f268332800e14cfe55df))
+
 # [1.2.0](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/compare/[secure]...1.2.0) (2022-03-03)
 
 
