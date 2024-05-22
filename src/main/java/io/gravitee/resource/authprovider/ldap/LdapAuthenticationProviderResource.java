@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,62 +23,69 @@ import io.gravitee.resource.authprovider.ldap.cache.LRUCache;
 import io.gravitee.resource.authprovider.ldap.configuration.LdapAuthenticationProviderResourceConfiguration;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import org.ldaptive.*;
-import org.ldaptive.auth.*;
-import org.ldaptive.pool.*;
-import org.ldaptive.provider.unboundid.UnboundIDProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.ldaptive.BindConnectionInitializer;
+import org.ldaptive.ConnectionConfig;
+import org.ldaptive.Credential;
+import org.ldaptive.LdapAttribute;
+import org.ldaptive.LdapEntry;
+import org.ldaptive.LdapException;
+import org.ldaptive.PooledConnectionFactory;
+import org.ldaptive.ReturnAttributes;
+import org.ldaptive.SearchConnectionValidator;
+import org.ldaptive.auth.AbstractAuthenticationHandler;
+import org.ldaptive.auth.AccountState;
+import org.ldaptive.auth.AuthenticationRequest;
+import org.ldaptive.auth.AuthenticationResponse;
+import org.ldaptive.auth.Authenticator;
+import org.ldaptive.auth.EntryResolver;
+import org.ldaptive.auth.SearchDnResolver;
+import org.ldaptive.auth.SearchEntryResolver;
+import org.ldaptive.auth.SimpleBindAuthenticationHandler;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class LdapAuthenticationProviderResource extends AuthenticationProviderResource<LdapAuthenticationProviderResourceConfiguration> {
-
-    private final Logger logger = LoggerFactory.getLogger(LdapAuthenticationProviderResource.class);
 
     private static final String LDAP_SEPARATOR = ",";
 
-    private PooledConnectionFactory pooledConnectionFactory, searchPooledConnectionFactory;
-
-    private Authenticator authenticator;
-
-    private LRUCache cache;
-
     private String[] userAttributes = ReturnAttributes.ALL_USER.value();
+
+    private PooledConnectionFactory pooledConnectionFactory;
+    private PooledConnectionFactory searchPooledConnectionFactory;
+    private Authenticator authenticator;
+    private LRUCache cache;
 
     @Override
     public void authenticate(String username, String password, ExecutionContext context, Handler<Authentication> handler) {
         Authentication authentication = cache.get(username);
-
         if (authentication == null) {
             try {
                 AuthenticationResponse response = authenticator.authenticate(
                     new AuthenticationRequest(username, new Credential(password), userAttributes)
                 );
-                if (response.getResult()) {
+                if (response.isSuccess()) {
                     LdapEntry userEntry = response.getLdapEntry();
-
                     authentication = new Authentication(userEntry.getDn());
-
                     Map<String, Object> attributes = userEntry
                         .getAttributes()
                         .stream()
                         .collect(Collectors.toMap(LdapAttribute::getName, LdapAttribute::getStringValue));
-
                     authentication.setAttributes(attributes);
-
                     cache.put(username, authentication);
-
                     handler.handle(authentication);
                 } else {
-                    logger.debug("Failed to authenticate user[{}] message[{}]", username, response.getMessage());
+                    AccountState.Error error = Optional.ofNullable(response.getAccountState()).map(AccountState::getError).orElse(null);
+                    log.debug("Failed to authenticate user[{}] message[{}]", username, error);
                     handler.handle(null);
                 }
             } catch (LdapException ldapEx) {
-                logger.error("An error occurs while trying to authenticate a user from LDAP [{}]", name(), ldapEx);
+                log.error("An error occurs while trying to authenticate a user from LDAP [{}]", name(), ldapEx);
                 handler.handle(null);
             }
         } else {
@@ -90,31 +97,32 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
     protected void doStart() throws Exception {
         super.doStart();
 
-        pooledConnectionFactory = bindPooledConnectionFactory();
-        searchPooledConnectionFactory = searchPooledConnectionFactory();
+        pooledConnectionFactory = getPooledFactory();
+        searchPooledConnectionFactory = getPooledFactory();
 
-        logger.info("Init LDAP connection to source[{}]", configuration().getContextSourceUrl());
-        if (pooledConnectionFactory != null) {
-            pooledConnectionFactory.getConnectionPool().initialize();
+        log.info("Init LDAP connection to source[{}]", configuration().getContextSourceUrl());
+        if (!pooledConnectionFactory.isInitialized()) {
+            pooledConnectionFactory.initialize();
         }
 
-        if (searchPooledConnectionFactory != null) {
-            searchPooledConnectionFactory.getConnectionPool().initialize();
+        if (!searchPooledConnectionFactory.isInitialized()) {
+            searchPooledConnectionFactory.initialize();
         }
 
-        PooledSearchDnResolver dnResolver = new PooledSearchDnResolver(searchPooledConnectionFactory);
+        var dnResolver = new SearchDnResolver();
+        //searchPooledConnectionFactory
         String userSearchBase = configuration().getUserSearchBase();
         dnResolver.setBaseDn(configuration().getContextSourceBase());
         if (userSearchBase != null && !userSearchBase.isEmpty()) {
             dnResolver.setBaseDn(userSearchBase + LDAP_SEPARATOR + dnResolver.getBaseDn());
         }
         // unable *={0} authentication filter (ldaptive use *={user})
-        dnResolver.setUserFilter(configuration().getUserSearchFilter().replaceAll("\\{0\\}", "{user}"));
+        dnResolver.setUserFilter(configuration().getUserSearchFilter().replace("\\{0\\}", "{user}"));
         dnResolver.setSubtreeSearch(true);
         dnResolver.setAllowMultipleDns(false);
 
-        AbstractAuthenticationHandler authHandler = new PooledBindAuthenticationHandler(pooledConnectionFactory);
-        PooledSearchEntryResolver pooledSearchEntryResolver = new PooledSearchEntryResolver(pooledConnectionFactory);
+        AbstractAuthenticationHandler authHandler = new SimpleBindAuthenticationHandler(pooledConnectionFactory);
+        EntryResolver pooledSearchEntryResolver = new SearchEntryResolver(pooledConnectionFactory);
 
         authenticator = new Authenticator(dnResolver, authHandler);
         authenticator.setEntryResolver(pooledSearchEntryResolver);
@@ -136,41 +144,20 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
     protected void doStop() throws Exception {
         super.doStop();
 
-        if (pooledConnectionFactory != null) {
-            logger.info("Closing LDAP connections to source[{}]", configuration().getContextSourceUrl());
-            pooledConnectionFactory.getConnection().close();
-            pooledConnectionFactory.getConnectionPool().close();
+        if (pooledConnectionFactory.isInitialized()) {
+            log.info("Closing LDAP connections to source[{}]", configuration().getContextSourceUrl());
+            pooledConnectionFactory.close();
         }
 
-        if (searchPooledConnectionFactory != null) {
-            logger.info("Closing LDAP search connections to source[{}]", configuration().getContextSourceUrl());
-            searchPooledConnectionFactory.getConnection().close();
-            searchPooledConnectionFactory.getConnectionPool().close();
+        if (searchPooledConnectionFactory.isInitialized()) {
+            log.info("Closing LDAP search connections to source[{}]", configuration().getContextSourceUrl());
+            searchPooledConnectionFactory.close();
         }
 
         if (cache != null) {
             cache.clear();
             cache.close();
         }
-    }
-
-    private ConnectionPool bindConnectionPool() {
-        PoolConfig poolConfig = new PoolConfig();
-        poolConfig.setMinPoolSize(configuration().getMinPoolSize());
-        poolConfig.setMaxPoolSize(configuration().getMaxPoolSize());
-        poolConfig.setValidatePeriodically(true);
-        BlockingConnectionPool connectionPool = new BlockingConnectionPool(poolConfig, (DefaultConnectionFactory) bindConnectionFactory());
-        connectionPool.setValidator(new SearchValidator());
-
-        return connectionPool;
-    }
-
-    private ConnectionFactory bindConnectionFactory() {
-        UnboundIDProvider unboundIDProvider = new UnboundIDProvider();
-        DefaultConnectionFactory connectionFactory = new DefaultConnectionFactory();
-        connectionFactory.setConnectionConfig(connectionConfig());
-        connectionFactory.setProvider(unboundIDProvider);
-        return connectionFactory;
     }
 
     private ConnectionConfig connectionConfig() {
@@ -183,36 +170,17 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
             configuration().getContextSourceUsername(),
             new Credential(configuration().getContextSourcePassword())
         );
-        connectionConfig.setConnectionInitializer(connectionInitializer);
+        connectionConfig.setConnectionInitializers(connectionInitializer);
         return connectionConfig;
     }
 
-    private PooledConnectionFactory searchPooledConnectionFactory() {
-        return new PooledConnectionFactory(searchConnectionPool());
-    }
-
-    private PooledConnectionFactory bindPooledConnectionFactory() {
-        return new PooledConnectionFactory(bindConnectionPool());
-    }
-
-    private ConnectionPool searchConnectionPool() {
-        PoolConfig poolConfig = new PoolConfig();
+    private PooledConnectionFactory getPooledFactory() {
+        var poolConfig = new PooledConnectionFactory();
+        poolConfig.setConnectionConfig(connectionConfig());
         poolConfig.setMinPoolSize(configuration().getMinPoolSize());
         poolConfig.setMaxPoolSize(configuration().getMaxPoolSize());
+        poolConfig.setValidator(new SearchConnectionValidator());
         poolConfig.setValidatePeriodically(true);
-        BlockingConnectionPool connectionPool = new BlockingConnectionPool(
-            poolConfig,
-            (DefaultConnectionFactory) searchConnectionFactory()
-        );
-        connectionPool.setValidator(new SearchValidator());
-        return connectionPool;
-    }
-
-    private ConnectionFactory searchConnectionFactory() {
-        UnboundIDProvider unboundIDProvider = new UnboundIDProvider();
-        DefaultConnectionFactory connectionFactory = new DefaultConnectionFactory();
-        connectionFactory.setConnectionConfig(connectionConfig());
-        connectionFactory.setProvider(unboundIDProvider);
-        return connectionFactory;
+        return poolConfig;
     }
 }
