@@ -1,6 +1,6 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "id" : "urn:jsonschema:io:gravitee:resource:authprovider:ldap:LdapIdentityProviderConfiguration",
   "properties" : {
     "contextSourceUrl" : {
       "type" : "string",
@@ -41,7 +41,8 @@
     },
     "attributes" : {
       "type" : "array",
-      "title": "User LDAP attributes to put in the request context. Attributes can then be read from any other policy supporting EL (gravitee.attribute.user.{attribute})",
+      "title": "User LDAP attributes",
+      "description": "User LDAP attributes to put in the request context. Attributes can then be read from any other policy supporting EL (gravitee.attribute.user.{attribute})",
       "items" : {
         "type" : "string",
         "title": "Ldap attribute",
