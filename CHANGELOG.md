@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/compare/1.3.0...1.4.0) (2024-07-11)
+
+
+### Features
+
+* rework schema-form to use new GioJsonSchema Ui component ([97d9a84](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/commit/97d9a84fc5965e608eee64ce6964ef1bc42b4384))
+
 # [1.3.0](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/compare/1.2.0...1.3.0) (2022-03-04)
 
 
