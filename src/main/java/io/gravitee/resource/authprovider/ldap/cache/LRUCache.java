@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,8 +15,11 @@
  */
 package io.gravitee.resource.authprovider.ldap.cache;
 
+import com.google.common.hash.Hashing;
 import io.gravitee.resource.authprovider.api.Authentication;
+import java.io.Serial;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -43,7 +46,7 @@ public class LRUCache {
     /**
      * Map to cache authentication results.
      */
-    private Map<String, Item> cache;
+    private final Map<String, Item> cache;
 
     /**
      * Executor for performing eviction.
@@ -65,10 +68,8 @@ public class LRUCache {
      */
     public LRUCache(final int size, final Duration timeToLive, final Duration interval) {
         cache =
-            new LinkedHashMap<String, Item>(INITIAL_CAPACITY, LOAD_FACTOR, true) {
-                /**
-                 * serialVersionUID.
-                 */
+            new LinkedHashMap<>(INITIAL_CAPACITY, LOAD_FACTOR, true) {
+                @Serial
                 private static final long serialVersionUID = -4082551016104288539L;
 
                 @Override
@@ -80,10 +81,10 @@ public class LRUCache {
         final Runnable expire = () -> {
             synchronized (cache) {
                 final Iterator<Item> i = cache.values().iterator();
-                final long t = System.currentTimeMillis();
+                final Instant now = Instant.now();
                 while (i.hasNext()) {
                     final Item item = i.next();
-                    if (t - item.creationTime > timeToLive.toMillis()) {
+                    if (Duration.between(item.creationTime, now).compareTo(timeToLive) > 0) {
                         i.remove();
                     }
                 }
@@ -101,19 +102,20 @@ public class LRUCache {
         }
     }
 
-    public Authentication get(final String request) {
+    public Authentication get(final Key key) {
         synchronized (cache) {
-            if (cache.containsKey(request)) {
-                return cache.get(request).result;
+            String hash = key.asHash();
+            if (cache.containsKey(hash)) {
+                return cache.get(hash).result;
             } else {
                 return null;
             }
         }
     }
 
-    public void put(final String request, final Authentication response) {
+    public void put(final Key key, final Authentication response) {
         synchronized (cache) {
-            cache.put(request, new Item(response));
+            cache.put(key.asHash(), new Item(response));
         }
     }
 
@@ -133,32 +135,27 @@ public class LRUCache {
      */
     public void close() {
         executor.shutdown();
-        cache = null;
+    }
+
+    /**
+     * Represents the cache key, not stored as is but hashed using {@link #asHash()}
+     * @param username
+     * @param password
+     */
+    public record Key(String username, String password) {
+        String asHash() {
+            return Hashing.sha256().hashBytes(username.concat("/").concat(password).getBytes()).toString();
+        }
     }
 
     /**
      * Container for data related to cached ldap authentication results.
+     * @param result auth object
+     * @param creationTime timestamp when this item is created
      */
-    private class Item {
-
-        /**
-         * Ldap result.
-         */
-        private final Authentication result;
-
-        /**
-         * Timestamp when this item is created.
-         */
-        private final long creationTime;
-
-        /**
-         * Creates a new item.
-         *
-         * @param sr authentication result
-         */
-        Item(final Authentication sr) {
-            result = sr;
-            creationTime = System.currentTimeMillis();
+    private record Item(Authentication result, Instant creationTime) {
+        Item(final Authentication authentication) {
+            this(authentication, Instant.now());
         }
     }
 }
