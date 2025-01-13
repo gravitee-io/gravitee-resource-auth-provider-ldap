@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+/*
+ * Copyright © 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,23 +15,34 @@
  */
 package io.gravitee.resource.authprovider.ldap.configuration;
 
+import io.gravitee.plugin.annotation.ConfigurationEvaluator;
 import io.gravitee.resource.api.ResourceConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
+import io.gravitee.secrets.api.el.FieldKind;
+import java.time.Duration;
 import java.util.List;
+import lombok.Data;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
+@ConfigurationEvaluator
 public class LdapAuthenticationProviderResourceConfiguration implements ResourceConfiguration {
 
+    @Secret
     private String contextSourceUrl;
 
     private boolean useStartTLS;
 
+    @Secret
     private String contextSourceBase;
 
+    @Secret
     private String contextSourceUsername;
 
+    @Secret(FieldKind.PASSWORD)
     private String contextSourcePassword;
 
     private String userSearchBase = "";
@@ -52,115 +63,5 @@ public class LdapAuthenticationProviderResourceConfiguration implements Resource
 
     private Integer maxPoolSize = 15;
 
-    public String getContextSourceUrl() {
-        return contextSourceUrl;
-    }
-
-    public void setContextSourceUrl(String contextSourceUrl) {
-        this.contextSourceUrl = contextSourceUrl;
-    }
-
-    public boolean isUseStartTLS() {
-        return useStartTLS;
-    }
-
-    public void setUseStartTLS(boolean useStartTLS) {
-        this.useStartTLS = useStartTLS;
-    }
-
-    public String getContextSourceBase() {
-        return contextSourceBase;
-    }
-
-    public void setContextSourceBase(String contextSourceBase) {
-        this.contextSourceBase = contextSourceBase;
-    }
-
-    public String getContextSourceUsername() {
-        return contextSourceUsername;
-    }
-
-    public void setContextSourceUsername(String contextSourceUsername) {
-        this.contextSourceUsername = contextSourceUsername;
-    }
-
-    public String getContextSourcePassword() {
-        return contextSourcePassword;
-    }
-
-    public void setContextSourcePassword(String contextSourcePassword) {
-        this.contextSourcePassword = contextSourcePassword;
-    }
-
-    public String getUserSearchBase() {
-        return userSearchBase;
-    }
-
-    public void setUserSearchBase(String userSearchBase) {
-        this.userSearchBase = userSearchBase;
-    }
-
-    public String getUserSearchFilter() {
-        return userSearchFilter;
-    }
-
-    public void setUserSearchFilter(String userSearchFilter) {
-        this.userSearchFilter = userSearchFilter;
-    }
-
-    public List<String> getAttributes() {
-        return attributes;
-    }
-
-    public void setAttributes(List<String> attributes) {
-        this.attributes = attributes;
-    }
-
-    public Long getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    public void setConnectTimeout(Long connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    public Long getResponseTimeout() {
-        return responseTimeout;
-    }
-
-    public void setResponseTimeout(Long responseTimeout) {
-        this.responseTimeout = responseTimeout;
-    }
-
-    public Integer getMinPoolSize() {
-        return minPoolSize;
-    }
-
-    public void setMinPoolSize(Integer minPoolSize) {
-        this.minPoolSize = minPoolSize;
-    }
-
-    public Integer getMaxPoolSize() {
-        return maxPoolSize;
-    }
-
-    public void setMaxPoolSize(Integer maxPoolSize) {
-        this.maxPoolSize = maxPoolSize;
-    }
-
-    public int getCacheMaxElements() {
-        return cacheMaxElements;
-    }
-
-    public void setCacheMaxElements(int cacheMaxElements) {
-        this.cacheMaxElements = cacheMaxElements;
-    }
-
-    public int getCacheTimeToLive() {
-        return cacheTimeToLive;
-    }
-
-    public void setCacheTimeToLive(int cacheTimeToLive) {
-        this.cacheTimeToLive = cacheTimeToLive;
-    }
+    private long cacheChecksMs = Duration.ofMinutes(1).toMillis();
 }

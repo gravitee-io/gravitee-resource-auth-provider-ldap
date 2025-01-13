@@ -8,63 +8,143 @@ image:https://circleci.com/gh/gravitee-io/gravitee-resource-auth-provider-ldap.s
 image:https://f.hubspotusercontent40.net/hubfs/7600448/gravitee-github-button.jpg["Join the community forum", link="https://community.gravitee.io?utm_source=readme", height=20]
 endif::[]
 
+
 == Description
 
 Gravitee.io LDAP Authentication Provider resource is used to validate user's credentials against an LDAP server.
 
+== Compatibility with APIM
+
+|===
+| Plugin version | APIM version
+
+| 2.0            | 4.6 to latest
+| 1.0            | Previous versions
+|===
 == Configuration
 
 You can configure the resource with the following options :
 
 |===
-|Property |Required |Description |Type |Default
+|Property |Required |Description |Type |Default| Supports EL| Supports secrets
 
 .^|contextSourceUrl
 ^.^|X
 |URL to the LDAP server instance
 ^.^|string
 ^.^|ldap://myserver.example.com:389
+^.^|X
+^.^|X
+
 
 .^|contextSourceBase
 ^.^|X
 |The source base used to authenticate to the LDAP server and query for users when validating user's credentials
 ^.^|string
 ^.^|-
+^.^|X
+^.^|X
 
 .^|contextSourceUsername
 ^.^|X
 |Username credential used to connect to the LDAP server
 ^.^|string
 ^.^|-
+^.^|X
+^.^|X
 
 .^|contextSourcePassword
 ^.^|X
 |Password credential used to connect to the LDAP server
 ^.^|string
 ^.^|-
+^.^|X
+^.^|X
 
 .^|useStartTLS
-^.^|X
+^.^|-
 |Should the API gateway use SSL to connect to the LDAP server
 ^.^|boolean
 ^.^|false
+^.^|-
+^.^|-
 
 .^|userSearchFilter
 ^.^|X
 |LDAP Filter to select the relevant attribute to check the username
 ^.^|string
 ^.^|uid={0}
+^.^|X
+^.^|-
 
 .^|userSearchBase
-^.^|X
-|Search base used to search into the correct OU when validating user's credentials
+^.^|-
+|Search base within `contextSourceBase` used to search into the correct OU when validating user's credentials.
 ^.^|string
 ^.^|ou=users
+^.^|X
+^.^|-
+
+.^|cacheMaxElements
+^.^|X
+|Maximum number of elements within the cache used to store successful authentications. 0 means no cache.
+^.^|positive integer
+^.^|100
+^.^|-
+^.^|-
+
+.^|cacheTimeToLive
+^.^|X
+|Maximum time to live (in milliseconds) of the elements from the cache used to store successful authentications.
+^.^|positive integer
+^.^|60000 (min 1000)
+^.^|-
+^.^|-
+
+.^|attributes
+^.^|X
+^.^|User LDAP attributes to put in the request context. Attributes can then be read from any other policy supporting EL i.e. `gravitee.attribute.user.{attribute}`
+^.^|array of string
+^.^|[*] (all)
+^.^|-
+^.^|-
+
+
+.^|connectTimeout
+^.^|-
+|Duration of time in milliseconds that connects will block.
+^.^|positive integer
+^.^|5000
+^.^|-
+^.^|-
+
+.^|responseTimeout
+^.^|-
+|Duration of time in milliseconds to wait for responses
+^.^|positive integer
+^.^|5000
+^.^|-
+^.^|-
+
+.^|minPoolSize
+^.^|-
+|Minimum pool of connections to be initialized
+^.^|positive integer
+^.^|5
+^.^|-
+^.^|-
+
+.^|maxPoolSize
+^.^|-
+|Maximum pool of connections can grow to
+^.^|positive integer
+^.^|15
+^.^|-
+^.^|-
 
 |===
 
-
-[source, json]
+[source,json]
 .Configuration example
 ----
 {
@@ -76,10 +156,31 @@ You can configure the resource with the following options :
         "useStartTLS": false,
         "userSearchFilter": "uid={0}",
         "userSearchBase": "ou=Special Users",
+        "attributes": [
+          "displayName",
+          "mail",
+          "ou"
+        ],
+        "cacheMaxElements": 100,
+        "cacheTimeToLive": 60000,
         "connectTimeout": 5000,
         "responseTimeout": 5000,
         "minPoolSize": 5,
         "maxPoolSize": 15
+    }
+}
+----
+
+[source, json]
+.Sample configuration with secrets and EL
+----
+{
+    "configuration": {
+        "contextSourceUrl": "{#secrets.get('/kubernetes/ldap:url')}",
+        "contextSourceBase": "dc=example,dc=com",
+        "contextSourceUsername": "cn=Directory Manager",
+        "contextSourcePassword":"{#secrets.get('/kubernetes/ldap:password')}",
+        "userSearchBase": "{#dictionnary['ldap']['search-base]}"
     }
 }
 ----
