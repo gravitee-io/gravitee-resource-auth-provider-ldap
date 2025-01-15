@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/compare/1.4.0...2.0.0) (2025-01-15)
+
+
+### Features
+
+* support of EL and secrets, move to ldaptive 2.4 ([f131b5b](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/commit/f131b5b4814aa7db2ab1fddb208471faac7b5922))
+
+
+### BREAKING CHANGES
+
+* use of secret-api 1.0.0
+
 # [1.4.0](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/compare/1.3.0...1.4.0) (2024-07-11)
 
 
