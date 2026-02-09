@@ -36,7 +36,6 @@
         },
         "userSearchBase": {
             "type": "string",
-            "default": "ou=users",
             "title": "User search base",
             "description": "If user-search-base isn't supplied, the search will be performed using the base DN. (Supports EL)"
         },
