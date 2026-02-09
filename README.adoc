@@ -79,9 +79,9 @@ You can configure the resource with the following options :
 
 .^|userSearchBase
 ^.^|-
-|Search base within `contextSourceBase` used to search into the correct OU when validating user's credentials.
+|Search base within `contextSourceBase` used to search into the correct OU when validating user's credentials. If not supplied, the search will be performed using the Base DN (`contextSourceBase`).
 ^.^|string
-^.^|ou=users
+^.^|-
 ^.^|X
 ^.^|-
 
