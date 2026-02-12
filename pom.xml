@@ -35,7 +35,7 @@
     <description>The resource is defined to authenticate a user in LDAP.</description>
 
     <properties>
-        <ldaptive.version>2.4.0</ldaptive.version>
+        <ldaptive.version>2.5.0</ldaptive.version>
         <gravitee-apim.version>4.7.7</gravitee-apim.version>
         <gravitee-resource-api.version>1.1.0</gravitee-resource-api.version>
         <gravitee-resource-auth-provider.version>1.3.0</gravitee-resource-auth-provider.version>
