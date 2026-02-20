@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/compare/2.0.0...2.0.1) (2026-02-20)
+
+
+### Bug Fixes
+
+* Remove default value of User search base field from LDAP Resource ([9195e49](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/commit/9195e493d0c50896744da7f372fcccb818b7a579))
+
 # [2.0.0](https://github.com/gravitee-io/gravitee-resource-auth-provider-ldap/compare/1.4.0...2.0.0) (2025-01-15)
 
 
