@@ -13,14 +13,18 @@ endif::[]
 
 Gravitee.io LDAP Authentication Provider resource is used to validate user's credentials against an LDAP server.
 
-== Compatibility with APIM
+== Compatibility matrix
 
 |===
-| Plugin version | APIM version
+| Plugin version | APIM              | Java version
 
-| 2.0            | 4.6 to latest
-| 1.0            | Previous versions
+| 3.0            | 4.9.x to latest   | 21
+| 2.0            | 4.6 to latest     | 17
+| 1.0            | Previous versions | 11
 |===
+
+The *Java version* column is the bytecode level of the latest release of each line, which sets the minimum runtime able to load the artifact.
+
 == Configuration
 
 You can configure the resource with the following options :
