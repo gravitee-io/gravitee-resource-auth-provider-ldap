@@ -116,13 +116,12 @@ class LdapAuthenticationProviderResourceConfigurationTest {
         assertThat(evaluatedConfiguration.getUserSearchFilter()).isEqualTo("uid={0}");
         assertThat(evaluatedConfiguration.getUserSearchBase()).isEqualTo("ou=users");
 
-        assertThat(recordedSecretFieldAccessControls)
-            .containsExactlyInAnyOrder(
-                new SecretFieldAccessControl(true, FieldKind.GENERIC, "contextSourceUrl"),
-                new SecretFieldAccessControl(true, FieldKind.GENERIC, "contextSourceBase"),
-                new SecretFieldAccessControl(true, FieldKind.GENERIC, "contextSourceUsername"),
-                new SecretFieldAccessControl(true, FieldKind.PASSWORD, "contextSourcePassword")
-            );
+        assertThat(recordedSecretFieldAccessControls).containsExactlyInAnyOrder(
+            new SecretFieldAccessControl(true, FieldKind.GENERIC, "contextSourceUrl"),
+            new SecretFieldAccessControl(true, FieldKind.GENERIC, "contextSourceBase"),
+            new SecretFieldAccessControl(true, FieldKind.GENERIC, "contextSourceUsername"),
+            new SecretFieldAccessControl(true, FieldKind.PASSWORD, "contextSourcePassword")
+        );
     }
 
     @Test

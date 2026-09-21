@@ -51,7 +51,8 @@ public class LRUCache {
     /**
      * Executor for performing eviction.
      */
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> { // CheckStyle:JavadocVariable OFF
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
+        // CheckStyle:JavadocVariable OFF
         final Thread t = new Thread(r);
         t.setDaemon(true);
         return t;
@@ -67,16 +68,15 @@ public class LRUCache {
      * @param interval   to enforce timeToLive
      */
     public LRUCache(final int size, final Duration timeToLive, final Duration interval) {
-        cache =
-            new LinkedHashMap<>(INITIAL_CAPACITY, LOAD_FACTOR, true) {
-                @Serial
-                private static final long serialVersionUID = -4082551016104288539L;
+        cache = new LinkedHashMap<>(INITIAL_CAPACITY, LOAD_FACTOR, true) {
+            @Serial
+            private static final long serialVersionUID = -4082551016104288539L;
 
-                @Override
-                protected boolean removeEldestEntry(Map.Entry eldest) {
-                    return size() > size;
-                }
-            };
+            @Override
+            protected boolean removeEldestEntry(Map.Entry eldest) {
+                return size() > size;
+            }
+        };
 
         final Runnable expire = () -> {
             synchronized (cache) {
