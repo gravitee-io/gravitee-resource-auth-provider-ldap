@@ -114,10 +114,9 @@ class LdapAuthenticationProviderResourceTest {
 
         assertThat(authentication.get()).isNotNull();
         assertThat(authentication.get().getUsername()).isEqualTo("cn=Hubert J. Farnsworth,ou=people,dc=planetexpress,dc=com");
-        assertThat(authentication.get().getAttributes())
-            .containsAllEntriesOf(
-                Map.of("mail", "professor@planetexpress.com", "displayName", "Professor Farnsworth", "ou", "Office Management")
-            );
+        assertThat(authentication.get().getAttributes()).containsAllEntriesOf(
+            Map.of("mail", "professor@planetexpress.com", "displayName", "Professor Farnsworth", "ou", "Office Management")
+        );
     }
 
     @Test

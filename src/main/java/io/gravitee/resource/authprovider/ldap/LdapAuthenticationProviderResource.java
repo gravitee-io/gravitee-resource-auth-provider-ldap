@@ -63,8 +63,9 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
     @Override
     public LdapAuthenticationProviderResourceConfiguration configuration() {
         if (this.configuration == null) {
-            this.configuration =
-                new LdapAuthenticationProviderResourceConfigurationEvaluator(super.configuration()).evalNow(deploymentContext);
+            this.configuration = new LdapAuthenticationProviderResourceConfigurationEvaluator(super.configuration()).evalNow(
+                deploymentContext
+            );
         }
         return this.configuration;
     }
@@ -111,42 +112,37 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
 
         String[] userAttributes = getUserAttributes();
 
-        authenticator =
-            Authenticator
-                .builder()
-                .dnResolver(
-                    SearchDnResolver
-                        .builder()
-                        .factory(connectionFactory)
-                        .dn(
-                            Optional
-                                .ofNullable(configuration().getUserSearchBase())
-                                .map(dn -> {
-                                    if (!dn.isEmpty()) {
-                                        return dn.concat(LDAP_SEPARATOR);
-                                    }
-                                    return dn;
-                                })
-                                .orElse("")
-                                .concat(configuration().getContextSourceBase())
-                        )
-                        // replace *={0} authentication filter (ldaptive use *={user})
-                        .filter(configuration().getUserSearchFilter().replace("{0}", "{user}"))
-                        .subtreeSearch(true)
-                        .allowMultipleDns(false)
-                        .build()
-                )
-                .returnAttributes(userAttributes)
-                .authenticationHandler(new SimpleBindAuthenticationHandler(connectionFactory))
-                .entryResolver(new SearchEntryResolver())
-                .build();
+        authenticator = Authenticator.builder()
+            .dnResolver(
+                SearchDnResolver.builder()
+                    .factory(connectionFactory)
+                    .dn(
+                        Optional.ofNullable(configuration().getUserSearchBase())
+                            .map(dn -> {
+                                if (!dn.isEmpty()) {
+                                    return dn.concat(LDAP_SEPARATOR);
+                                }
+                                return dn;
+                            })
+                            .orElse("")
+                            .concat(configuration().getContextSourceBase())
+                    )
+                    // replace *={0} authentication filter (ldaptive use *={user})
+                    .filter(configuration().getUserSearchFilter().replace("{0}", "{user}"))
+                    .subtreeSearch(true)
+                    .allowMultipleDns(false)
+                    .build()
+            )
+            .returnAttributes(userAttributes)
+            .authenticationHandler(new SimpleBindAuthenticationHandler(connectionFactory))
+            .entryResolver(new SearchEntryResolver())
+            .build();
 
-        cache =
-            new LRUCache(
-                configuration().getCacheMaxElements(),
-                Duration.ofMillis(configuration().getCacheTimeToLive()),
-                Duration.ofMillis(configuration.getCacheChecksMs())
-            );
+        cache = new LRUCache(
+            configuration().getCacheMaxElements(),
+            Duration.ofMillis(configuration().getCacheTimeToLive()),
+            Duration.ofMillis(configuration.getCacheChecksMs())
+        );
     }
 
     @Override
@@ -168,18 +164,15 @@ public class LdapAuthenticationProviderResource extends AuthenticationProviderRe
     private PooledConnectionFactory pooledConnectionFactory() {
         @SuppressWarnings("java:S5852")
         String contextSourceUrl = configuration().getContextSourceUrl().trim().replaceAll("\\s*,\\s*", " ");
-        return PooledConnectionFactory
-            .builder()
+        return PooledConnectionFactory.builder()
             .config(
-                ConnectionConfig
-                    .builder()
+                ConnectionConfig.builder()
                     .url(contextSourceUrl)
                     .useStartTLS(configuration().isUseStartTLS())
                     .connectTimeout(Duration.ofMillis(configuration().getConnectTimeout()))
                     .responseTimeout(Duration.ofMillis(configuration().getResponseTimeout()))
                     .connectionInitializers(
-                        BindConnectionInitializer
-                            .builder()
+                        BindConnectionInitializer.builder()
                             .dn(configuration().getContextSourceUsername())
                             .credential(configuration().getContextSourcePassword())
                             .build()
